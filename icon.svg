@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#1a1a2e"/>
+  <circle cx="256" cy="180" r="45" fill="none" stroke="#16c79a" stroke-width="8"/>
+  <line x1="256" y1="225" x2="256" y2="360" stroke="#16c79a" stroke-width="10" stroke-linecap="round"/>
+  <line x1="256" y1="270" x2="200" y2="310" stroke="#16c79a" stroke-width="8" stroke-linecap="round"/>
+  <line x1="256" y1="270" x2="312" y2="310" stroke="#16c79a" stroke-width="8" stroke-linecap="round"/>
+  <line x1="256" y1="360" x2="210" y2="430" stroke="#16c79a" stroke-width="8" stroke-linecap="round"/>
+  <line x1="256" y1="360" x2="302" y2="430" stroke="#16c79a" stroke-width="8" stroke-linecap="round"/>
+  <path d="M180 160 A90 90 0 0 1 332 160" fill="none" stroke="#16c79a" stroke-width="4" stroke-dasharray="8 4" opacity="0.5"/>
+  <path d="M190 270 A80 80 0 0 0 140 330" fill="none" stroke="#16c79a" stroke-width="4" stroke-dasharray="8 4" opacity="0.5"/>
+  <path d="M322 270 A80 80 0 0 1 372 330" fill="none" stroke="#16c79a" stroke-width="4" stroke-dasharray="8 4" opacity="0.5"/>
+  <text x="256" y="490" text-anchor="middle" fill="#e0e0e0" font-family="Arial,sans-serif" font-size="36" font-weight="bold">CARs</text>
+</svg>

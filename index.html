@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Restore N Perform — CARs Assessment</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#1a1a2e;--navy-light:#16213e;--teal:#16c79a;--teal-dark:#0fa87f;
+  --bg:#f5f6fa;--card:#fff;--text:#2c3e50;--text-light:#7f8c8d;
+  --green:#27ae60;--yellow:#f39c12;--orange:#e67e22;--red:#e74c3c;--red-dark:#c0392b;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);-webkit-tap-highlight-color:transparent}
+body{display:flex;flex-direction:column;min-height:100dvh}
+
+/* Header */
+header{background:var(--navy);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+header h1{font-size:1.1rem;font-weight:700;letter-spacing:.5px}
+header h1 span{color:var(--teal)}
+.header-btn{background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:6px;border-radius:8px;transition:.2s}
+.header-btn:hover{background:rgba(255,255,255,.1)}
+
+/* Main */
+main{flex:1;padding:16px;max-width:600px;margin:0 auto;width:100%}
+
+/* Screens */
+.screen{display:none;animation:fadeIn .3s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* Cards */
+.card{background:var(--card);border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:var(--shadow);transition:.2s}
+.card:active{transform:scale(.98)}
+
+/* Joint List */
+.joint-card{display:flex;align-items:center;gap:14px;cursor:pointer}
+.joint-icon{font-size:2rem;width:52px;height:52px;background:var(--bg);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.joint-info h3{font-size:1rem;margin-bottom:2px}
+.joint-info p{font-size:.82rem;color:var(--text-light)}
+.joint-status{margin-left:auto;font-size:.75rem;padding:4px 10px;border-radius:20px;font-weight:600;white-space:nowrap}
+.status-pending{background:#eee;color:#999}
+.status-good{background:#e8f8f0;color:var(--green)}
+.status-moderate{background:#fef3e0;color:var(--orange)}
+.status-severe{background:#fde8e8;color:var(--red)}
+
+/* Assessment */
+.assess-header{text-align:center;margin-bottom:20px}
+.assess-header h2{font-size:1.3rem;margin-bottom:4px}
+.assess-header .subtitle{color:var(--text-light);font-size:.85rem}
+.cars-instruction{background:var(--navy);color:#fff;border-radius:12px;padding:14px 16px;margin-bottom:20px;font-size:.85rem;line-height:1.5}
+.cars-instruction strong{color:var(--teal)}
+
+/* Side picker */
+.side-picker{display:flex;gap:8px;margin-bottom:16px;justify-content:center}
+.side-btn{padding:10px 24px;border-radius:30px;border:2px solid var(--navy);background:none;font-weight:600;font-size:.9rem;cursor:pointer;transition:.2s;color:var(--navy)}
+.side-btn.active{background:var(--navy);color:#fff}
+
+/* Progress bar */
+.progress-bar{height:6px;background:#e0e0e0;border-radius:3px;margin-bottom:20px;overflow:hidden}
+.progress-fill{height:100%;background:var(--teal);border-radius:3px;transition:width .4s ease}
+
+/* Direction rating */
+.direction-card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.direction-card h4{font-size:.95rem;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.rating-row{display:flex;gap:6px;margin-bottom:8px}
+.rating-btn{flex:1;height:48px;border-radius:10px;border:2px solid #e0e0e0;background:#fff;font-size:1rem;font-weight:700;cursor:pointer;transition:.2s}
+.rating-btn:active{transform:scale(.95)}
+.rating-btn.selected{border-color:transparent;color:#fff}
+.rating-btn.r0{border-color:var(--green)}.rating-btn.r0.selected{background:var(--green)}
+.rating-btn.r1{border-color:#6bc87b}.rating-btn.r1.selected{background:#6bc87b}
+.rating-btn.r2{border-color:var(--yellow)}.rating-btn.r2.selected{background:var(--yellow)}
+.rating-btn.r3{border-color:var(--orange)}.rating-btn.r3.selected{background:var(--orange)}
+.rating-btn.r4{border-color:#d35400}.rating-btn.r4.selected{background:#d35400}
+.rating-btn.r5{border-color:var(--red)}.rating-btn.r5.selected{background:var(--red)}
+.rating-label{display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-light);padding:0 4px}
+
+/* Pain toggle */
+.pain-row{display:flex;align-items:center;gap:10px;margin-top:8px}
+.pain-toggle{width:48px;height:28px;border-radius:14px;border:none;background:#ddd;position:relative;cursor:pointer;transition:.3s}
+.pain-toggle.on{background:var(--red)}
+.pain-toggle::after{content:'';position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.3s}
+.pain-toggle.on::after{left:23px}
+.pain-input{flex:1;padding:8px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:.85rem;display:none}
+.pain-input.show{display:block}
+
+/* Buttons */
+.btn{display:block;width:100%;padding:16px;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;transition:.2s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--teal);color:#fff}
+.btn-primary:hover{background:var(--teal-dark)}
+.btn-secondary{background:var(--navy);color:#fff}
+.btn-outline{background:none;border:2px solid var(--navy);color:var(--navy)}
+.btn-row{display:flex;gap:10px;margin-top:16px}
+.btn-row .btn{flex:1}
+
+/* Summary */
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.summary-card{background:var(--card);border-radius:12px;padding:14px;box-shadow:var(--shadow);cursor:pointer;transition:.2s;border-left:4px solid #ddd}
+.summary-card:active{transform:scale(.97)}
+.summary-card.sg{border-left-color:var(--green)}
+.summary-card.sm{border-left-color:var(--orange)}
+.summary-card.ss{border-left-color:var(--red)}
+.summary-card h4{font-size:.85rem;margin-bottom:4px}
+.summary-card .score{font-size:1.5rem;font-weight:800}
+.summary-card .score-label{font-size:.7rem;color:var(--text-light)}
+
+/* Exercise recs */
+.exercise-group{margin-bottom:20px}
+.exercise-group h3{font-size:1rem;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--teal);display:flex;align-items:center;gap:8px}
+.exercise-item{background:var(--card);border-radius:12px;padding:14px;margin-bottom:8px;box-shadow:var(--shadow)}
+.exercise-item h4{font-size:.9rem;margin-bottom:4px;color:var(--navy)}
+.exercise-item .ex-type{font-size:.7rem;color:var(--teal);font-weight:700;text-transform:uppercase;margin-bottom:4px}
+.exercise-item p{font-size:.82rem;color:var(--text-light);line-height:1.4}
+.exercise-item .prescription{font-size:.82rem;color:var(--text);font-weight:600;margin-top:6px}
+
+/* Tabs */
+.tab-bar{display:flex;gap:4px;margin-bottom:16px;background:var(--navy);border-radius:12px;padding:4px}
+.tab-btn{flex:1;padding:10px;border:none;border-radius:10px;background:none;color:rgba(255,255,255,.6);font-weight:600;font-size:.85rem;cursor:pointer;transition:.2s}
+.tab-btn.active{background:var(--teal);color:#fff}
+
+/* History */
+.history-item{background:var(--card);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.history-item h4{font-size:.9rem}
+.history-item p{font-size:.78rem;color:var(--text-light)}
+.history-actions{display:flex;gap:8px}
+.history-actions button{background:none;border:none;font-size:1.1rem;cursor:pointer;padding:4px}
+
+/* Empty state */
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-light)}
+.empty-state .icon{font-size:3rem;margin-bottom:12px}
+
+/* Detail overlay */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.overlay.show{display:flex}
+.overlay-content{background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;padding:20px;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
+.overlay-handle{width:40px;height:4px;background:#ccc;border-radius:2px;margin:0 auto 16px}
+
+/* Misc */
+.text-center{text-align:center}
+.mt-12{margin-top:12px}
+.mt-20{margin-top:20px}
+.mb-16{margin-bottom:16px}
+.brand-footer{text-align:center;padding:20px;color:var(--text-light);font-size:.75rem}
+.brand-footer a{color:var(--teal);text-decoration:none}
+
+/* No restriction message */
+.no-issues{background:#e8f8f0;border-radius:12px;padding:20px;text-align:center;color:var(--green);font-weight:600;margin-bottom:20px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Restore <span>N</span> Perform</h1>
+  <button class="header-btn" onclick="showScreen('home')" title="Home">🏠</button>
+</header>
+
+<main>
+  <!-- HOME SCREEN -->
+  <div id="home" class="screen active">
+    <div class="text-center mb-16">
+      <h2 style="font-size:1.4rem;margin-bottom:4px">CARs Assessment</h2>
+      <p style="color:var(--text-light);font-size:.88rem">Select a joint to begin your assessment</p>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('assess')">Assess</button>
+      <button class="tab-btn" onclick="switchTab('history')">History</button>
+    </div>
+
+    <div id="tab-assess">
+      <div id="joint-list"></div>
+      <div class="btn-row mt-12">
+        <button class="btn btn-primary" onclick="startFullAssessment()">Full Body Assessment</button>
+      </div>
+      <div class="btn-row mt-12" id="view-results-btn" style="display:none">
+        <button class="btn btn-secondary" onclick="showResults()">View Results & Exercises</button>
+      </div>
+    </div>
+
+    <div id="tab-history" style="display:none">
+      <div id="history-list"></div>
+    </div>
+
+    <div class="brand-footer">
+      <p>Restore N Perform Fitness</p>
+      <p><a href="https://instagram.com/restorenperformfitness" target="_blank">@restorenperformfitness</a></p>
+    </div>
+  </div>
+
+  <!-- ASSESSMENT SCREEN -->
+  <div id="assessment" class="screen">
+    <div class="assess-header">
+      <h2 id="assess-joint-name"></h2>
+      <p class="subtitle" id="assess-subtitle"></p>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="assess-progress"></div></div>
+    <div class="cars-instruction" id="cars-instruction"></div>
+    <div id="side-picker-container"></div>
+    <div id="directions-container"></div>
+    <div class="btn-row mt-20">
+      <button class="btn btn-outline" onclick="prevJoint()">← Back</button>
+      <button class="btn btn-primary" onclick="nextJoint()">Next →</button>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+  <div id="results" class="screen">
+    <div class="text-center mb-16">
+      <h2 style="font-size:1.3rem">Assessment Results</h2>
+      <p style="color:var(--text-light);font-size:.85rem" id="results-date"></p>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchResultTab('summary')">Summary</button>
+      <button class="tab-btn" onclick="switchResultTab('exercises')">Exercises</button>
+    </div>
+    <div id="result-summary"></div>
+    <div id="result-exercises" style="display:none"></div>
+    <div class="btn-row mt-20">
+      <button class="btn btn-outline" onclick="showScreen('home')">← Home</button>
+      <button class="btn btn-primary" onclick="saveAssessment()">💾 Save Assessment</button>
+    </div>
+  </div>
+</main>
+
+<!-- Detail Overlay -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeOverlay()">
+  <div class="overlay-content">
+    <div class="overlay-handle"></div>
+    <div id="overlay-body"></div>
+    <button class="btn btn-outline mt-20" onclick="closeOverlay()">Close</button>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+const JOINTS = [
+  {
+    id:'neck',name:'Neck (Cervical)',icon:'🦴',bilateral:false,
+    directions:['Flexion','Extension','Lateral Flexion Left','Lateral Flexion Right','Rotation Left','Rotation Right'],
+    instruction:'Stand tall, fix your gaze forward. <strong>Slowly</strong> tuck your chin to chest (flexion), then look up (extension). Tilt ear to shoulder each side, then rotate to look over each shoulder. Move through the full range with control — no momentum.'
+  },
+  {
+    id:'scapula',name:'Scapula',icon:'🦋',bilateral:true,
+    directions:['Elevation','Depression','Protraction','Retraction','Upward Rotation','Downward Rotation'],
+    instruction:'With arm relaxed at your side, <strong>elevate</strong> your shoulder blade toward your ear, then <strong>depress</strong> it down. Protract (round forward) and retract (squeeze back). Slowly rotate the scapula upward and downward. Keep the motion isolated to the shoulder blade.'
+  },
+  {
+    id:'shoulder',name:'Shoulder',icon:'💪',bilateral:true,
+    directions:['Flexion','Extension','Abduction','Adduction','Internal Rotation','External Rotation'],
+    instruction:'Make a fist, lock the elbow straight. <strong>Slowly</strong> raise arm forward (flexion), then behind (extension). Lift out to side (abduction), cross body (adduction). With elbow bent 90°, rotate forearm inward and outward. Maximize the circle — no compensating with the torso.'
+  },
+  {
+    id:'thoracic',name:'Thoracic Spine',icon:'🔄',bilateral:false,
+    directions:['Flexion','Extension','Rotation Left','Rotation Right','Lateral Flexion Left','Lateral Flexion Right'],
+    instruction:'Sit upright in a chair with hips locked. <strong>Round</strong> your upper back forward (flexion), then arch back (extension). Rotate your torso left and right, then side-bend each direction. Keep your lower back and hips still — isolate the mid-back movement.'
+  },
+  {
+    id:'lumbar',name:'Lumbar Spine',icon:'🏋️',bilateral:false,
+    directions:['Flexion','Extension','Lateral Flexion Left','Lateral Flexion Right'],
+    instruction:'Stand with feet hip-width apart. <strong>Slowly</strong> round your lower back into flexion, then extend into a gentle backbend. Side-bend left and right. Move slowly and try to isolate the lumbar spine from the thoracic and hips.'
+  },
+  {
+    id:'hip',name:'Hip',icon:'🦵',bilateral:true,
+    directions:['Flexion','Extension','Abduction','Adduction','Internal Rotation','External Rotation'],
+    instruction:'Stand on one leg (hold a wall for balance). <strong>Slowly</strong> bring your knee up (flexion), extend leg behind (extension), out to side (abduction), across body (adduction). With knee bent 90°, rotate the lower leg inward (external hip rotation) and outward (internal rotation). Make the biggest circle you can control.'
+  },
+  {
+    id:'knee',name:'Knee',icon:'🦿',bilateral:true,
+    directions:['Flexion','Extension','Internal Tibial Rotation','External Tibial Rotation'],
+    instruction:'Sit on a chair with foot off the ground. <strong>Slowly</strong> straighten the knee fully (extension), then bend it as far as possible (flexion). With knee bent ~90°, gently rotate your lower leg inward and outward to assess tibial rotation. Move slowly with control.'
+  },
+  {
+    id:'elbow',name:'Elbow',icon:'💪',bilateral:true,
+    directions:['Flexion','Extension','Pronation','Supination'],
+    instruction:'Hold arm at your side, elbow bent 90°. <strong>Slowly</strong> bend the elbow fully (flexion), then straighten completely (extension). With elbow pinned to your side at 90°, rotate your palm down (pronation) and up (supination). Keep the upper arm still.'
+  },
+  {
+    id:'wrist',name:'Wrist',icon:'✋',bilateral:true,
+    directions:['Flexion','Extension','Radial Deviation','Ulnar Deviation'],
+    instruction:'Extend your arm forward, elbow straight. <strong>Slowly</strong> bend the wrist down (flexion) and up (extension). Then angle toward the thumb side (radial deviation) and pinky side (ulnar deviation). Keep the forearm completely still — isolate the wrist.'
+  },
+  {
+    id:'ankle',name:'Ankle',icon:'🦶',bilateral:true,
+    directions:['Dorsiflexion','Plantarflexion','Inversion','Eversion'],
+    instruction:'Sit with foot elevated off the ground. <strong>Slowly</strong> pull toes up toward shin (dorsiflexion), then point toes away (plantarflexion). Turn the sole inward (inversion) and outward (eversion). Try to make the biggest, smoothest circle you can with your foot.'
+  }
+];
+
+// ===== EXERCISE DATABASE =====
+const EXERCISES = {
+  neck: {
+    'Flexion': [
+      {name:'Chin Tuck PAILs/RAILs',type:'PAILs/RAILs',desc:'In a deep chin tuck position against a wall, press head back into the wall (PAILs) then try to tuck further (RAILs).',rx:'3 sets × 10s contract / 10s stretch'},
+      {name:'Supine Neck Flexion Stretch',type:'Passive Stretch',desc:'Lie on your back at the edge of a bench. Gently let gravity extend your neck, then use hands to assist flexion stretch.',rx:'3 × 30s holds'},
+      {name:'Prone Chin Tuck Lifts',type:'Strengthening',desc:'Lie face down, tuck chin and lift head 1 inch off the ground. Hold. Builds deep neck flexor strength.',rx:'3 × 8 reps, 3s hold each'}
+    ],
+    'Extension': [
+      {name:'Neck Extension PAILs/RAILs',type:'PAILs/RAILs',desc:'In a look-up position, press back of head into hand resistance (PAILs), then try to extend further (RAILs).',rx:'3 sets × 10s / 10s'},
+      {name:'Seated Neck Extension Stretch',type:'Passive Stretch',desc:'Sit upright, gently look up and back. Use fingertips on chin for mild overpressure.',rx:'3 × 30s holds'},
+      {name:'Prone Neck Extension Holds',type:'Strengthening',desc:'Lie face down at edge of bench, head hanging off. Extend neck against gravity and hold.',rx:'3 × 8 reps, 3s hold'}
+    ],
+    'Lateral Flexion Left': [
+      {name:'Lateral Neck PAILs/RAILs (Left)',type:'PAILs/RAILs',desc:'Tilt ear toward left shoulder at end range. Press head into right hand (PAILs), then try to tilt further left (RAILs).',rx:'3 × 10s / 10s'},
+      {name:'Upper Trap Stretch (Left)',type:'Passive Stretch',desc:'Sit on right hand, gently pull head toward left shoulder with left hand.',rx:'3 × 30s holds'},
+      {name:'Side-Lying Lateral Flexion Lifts',type:'Strengthening',desc:'Lie on right side, lift head toward ceiling using lateral neck flexors.',rx:'2 × 10 reps'}
+    ],
+    'Lateral Flexion Right': [
+      {name:'Lateral Neck PAILs/RAILs (Right)',type:'PAILs/RAILs',desc:'Tilt ear toward right shoulder. Press into left hand (PAILs), then tilt further right (RAILs).',rx:'3 × 10s / 10s'},
+      {name:'Upper Trap Stretch (Right)',type:'Passive Stretch',desc:'Sit on left hand, gently pull head toward right shoulder.',rx:'3 × 30s holds'},
+      {name:'Side-Lying Lateral Flexion Lifts (Right)',type:'Strengthening',desc:'Lie on left side, lift head toward ceiling.',rx:'2 × 10 reps'}
+    ],
+    'Rotation Left': [
+      {name:'Cervical Rotation PAILs/RAILs (Left)',type:'PAILs/RAILs',desc:'Turn head fully left. Press into right hand (PAILs), then actively try to rotate further left (RAILs).',rx:'3 × 10s / 10s'},
+      {name:'Seated Neck Rotation Stretch (Left)',type:'Passive Stretch',desc:'Sit tall, gently rotate head to look over left shoulder. Use hand for mild assist.',rx:'3 × 30s holds'},
+      {name:'Banded Neck Rotation (Left)',type:'Active Mobility',desc:'Light band around head, slowly rotate left against resistance.',rx:'2 × 8 slow reps'}
+    ],
+    'Rotation Right': [
+      {name:'Cervical Rotation PAILs/RAILs (Right)',type:'PAILs/RAILs',desc:'Turn head fully right. Press into left hand (PAILs), then rotate further right (RAILs).',rx:'3 × 10s / 10s'},
+      {name:'Seated Neck Rotation Stretch (Right)',type:'Passive Stretch',desc:'Sit tall, gently rotate to look over right shoulder.',rx:'3 × 30s holds'},
+      {name:'Banded Neck Rotation (Right)',type:'Active Mobility',desc:'Light band around head, slowly rotate right against resistance.',rx:'2 × 8 slow reps'}
+    ]
+  },
+  scapula: {
+    'Elevation': [
+      {name:'Scap Elevation PAILs/RAILs',type:'PAILs/RAILs',desc:'Hold a shrug at top range. Push down into a fixed bar (PAILs), then try to shrug higher (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Passive Overhead Hang',type:'Passive Stretch',desc:'Dead hang from a bar to decompress and stretch depressors.',rx:'3 × 20-30s'},
+      {name:'Loaded Shrugs with Pause',type:'Strengthening',desc:'Hold dumbbells, shrug up with a 3s pause at top.',rx:'3 × 10 reps'}
+    ],
+    'Depression': [
+      {name:'Scap Depression PAILs/RAILs',type:'PAILs/RAILs',desc:'In a dead hang or dip support, press shoulders away from ears (PAILs), then try to depress further (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Active Hang Scap Depression',type:'Active Mobility',desc:'Hang from bar, pull shoulder blades down without bending elbows.',rx:'3 × 8 reps, 3s hold'},
+      {name:'Seated Scap Depression Press',type:'Strengthening',desc:'Sit on hands on a bench edge, press down to lift hips slightly.',rx:'3 × 8 reps'}
+    ],
+    'Protraction': [
+      {name:'Scap Protraction PAILs/RAILs',type:'PAILs/RAILs',desc:'In a push-up plus position at end range, push further forward (PAILs), then retract against resistance (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Serratus Wall Slides',type:'Active Mobility',desc:'Stand facing wall, hands on wall. Slide hands up while pushing into the wall with protraction.',rx:'3 × 10 reps'},
+      {name:'Push-Up Plus',type:'Strengthening',desc:'At top of push-up, push further to round upper back, protracting scapulae.',rx:'3 × 12 reps'}
+    ],
+    'Retraction': [
+      {name:'Scap Retraction PAILs/RAILs',type:'PAILs/RAILs',desc:'Squeeze shoulder blades together at end range. Push hands forward into a wall (PAILs), then squeeze blades harder (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Prone Y-T-W Holds',type:'Active Mobility',desc:'Lie face down, arms in Y, T, and W positions. Squeeze shoulder blades, hold each.',rx:'3 × 8 reps each position, 3s hold'},
+      {name:'Band Pull-Aparts',type:'Strengthening',desc:'Hold band at shoulder width, pull apart squeezing shoulder blades.',rx:'3 × 15 reps'}
+    ],
+    'Upward Rotation': [
+      {name:'Upward Rotation PAILs/RAILs',type:'PAILs/RAILs',desc:'Arm overhead at end range, press down into a doorframe (PAILs), then try to reach higher (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Side-Lying Windmill',type:'Active Mobility',desc:'Lie on side, slowly rotate arm overhead in a big arc while maintaining scap control.',rx:'2 × 8 slow reps'},
+      {name:'Wall Slide with Upward Rotation',type:'Strengthening',desc:'Back to wall, slide arms up emphasizing upward rotation of scapula at top.',rx:'3 × 10 reps'}
+    ],
+    'Downward Rotation': [
+      {name:'Downward Rotation PAILs/RAILs',type:'PAILs/RAILs',desc:'With hand behind back, press into the wall (PAILs), then try to reach further up your back (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Behind-Back Reach Stretch',type:'Passive Stretch',desc:'Reach one hand behind your back and up between shoulder blades. Use a towel to assist.',rx:'3 × 30s holds'},
+      {name:'Reverse Shrug on Dip Bars',type:'Strengthening',desc:'Support yourself on dip bars, allow shoulder blades to downwardly rotate and hold.',rx:'3 × 8 reps, 3s hold'}
+    ]
+  },
+  shoulder: {
+    'Flexion': [
+      {name:'Shoulder Flexion PAILs/RAILs',type:'PAILs/RAILs',desc:'Lie on back, arm overhead in end-range flexion. Push arm into floor (PAILs), then try to reach further overhead (RAILs).',rx:'3 × 15s contract / 15s stretch'},
+      {name:'Wall-Assisted Shoulder Flexion Stretch',type:'Passive Stretch',desc:'Face a wall, walk fingers up as high as possible, lean in gently.',rx:'3 × 45s holds'},
+      {name:'Banded Overhead CARs',type:'Active Mobility',desc:'Light band around wrists, slowly raise arms overhead with control against band tension.',rx:'2 × 5 slow reps'}
+    ],
+    'Extension': [
+      {name:'Shoulder Extension PAILs/RAILs',type:'PAILs/RAILs',desc:'Hands behind you on a table. Push down into table (PAILs), then try to lift chest away (RAILs) to increase extension.',rx:'3 × 15s / 15s'},
+      {name:'Behind-Back Shoulder Stretch',type:'Passive Stretch',desc:'Clasp hands behind back, lift arms up while keeping torso upright.',rx:'3 × 30s holds'},
+      {name:'Prone Shoulder Extension Lifts',type:'Strengthening',desc:'Lie face down, arms at sides. Lift arms toward ceiling squeezing posterior deltoids.',rx:'3 × 12 reps'}
+    ],
+    'Abduction': [
+      {name:'Shoulder Abduction PAILs/RAILs',type:'PAILs/RAILs',desc:'Arm out to side against a doorframe at end range. Push into frame (PAILs), then try to abduct further (RAILs).',rx:'3 × 15s / 15s'},
+      {name:'Side-Lying Cross-Body Stretch',type:'Passive Stretch',desc:'Lie on the arm side, gently let gravity open up the shoulder into abduction.',rx:'3 × 45s'},
+      {name:'Lateral Raise CARs with Pause',type:'Active Mobility',desc:'Slow lateral raises with 3s pause at top. Control the eccentric.',rx:'2 × 8 reps'}
+    ],
+    'Adduction': [
+      {name:'Cross-Body Adduction PAILs/RAILs',type:'PAILs/RAILs',desc:'Pull arm across body, press outward against opposite hand (PAILs), then pull further across (RAILs).',rx:'3 × 15s / 15s'},
+      {name:'Cross-Body Shoulder Stretch',type:'Passive Stretch',desc:'Pull arm across chest with opposite hand. Keep shoulder depressed.',rx:'3 × 30s holds'},
+      {name:'Cable Cross-Body Pulls',type:'Strengthening',desc:'Using a cable or band, pull across body from low to high emphasizing horizontal adduction.',rx:'3 × 12 reps'}
+    ],
+    'Internal Rotation': [
+      {name:'Shoulder IR PAILs/RAILs',type:'PAILs/RAILs',desc:'Elbow at 90°, use a doorframe at end-range IR. Push outward (PAILs), then rotate further inward (RAILs).',rx:'3 × 15s / 15s'},
+      {name:'Sleeper Stretch',type:'Passive Stretch',desc:'Lie on your side, elbow at 90°. Use top hand to gently push forearm toward the floor.',rx:'3 × 45s holds'},
+      {name:'Banded Internal Rotation',type:'Strengthening',desc:'Band at elbow height, rotate hand toward belly. Slow and controlled.',rx:'3 × 12 reps'}
+    ],
+    'External Rotation': [
+      {name:'Shoulder ER PAILs/RAILs',type:'PAILs/RAILs',desc:'Elbow at 90° pinned to side, forearm rotated outward at end range. Push inward (PAILs), then rotate further out (RAILs).',rx:'3 × 15s / 15s'},
+      {name:'Open Book Stretch',type:'Passive Stretch',desc:'Side-lying, rotate top arm open to the opposite side. Let gravity assist.',rx:'3 × 45s holds'},
+      {name:'Banded External Rotation',type:'Strengthening',desc:'Band at elbow height, rotate hand away from belly. Control the return.',rx:'3 × 12 reps'}
+    ]
+  },
+  thoracic: {
+    'Flexion': [
+      {name:'T-Spine Flexion PAILs/RAILs',type:'PAILs/RAILs',desc:'In a seated rounded position, push chest forward (PAILs), then try to round further (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Cat Stretch (Upper)',type:'Passive Stretch',desc:'On all fours, focus on rounding the upper back maximally. Hold at peak.',rx:'3 × 30s holds'},
+      {name:'Seated Thoracic Flexion Curls',type:'Active Mobility',desc:'Sit upright, slowly round vertebra by vertebra from top down.',rx:'2 × 8 slow reps'}
+    ],
+    'Extension': [
+      {name:'T-Spine Extension PAILs/RAILs',type:'PAILs/RAILs',desc:'Over a foam roller at mid-back, push into the roller (PAILs), then try to extend further over it (RAILs).',rx:'3 × 15s / 15s'},
+      {name:'Foam Roller Thoracic Extension',type:'Passive Stretch',desc:'Place foam roller at mid-back, arms crossed. Lean back over the roller.',rx:'3 × 30-45s at 3 different levels'},
+      {name:'Bench T-Spine Extension Mobilization',type:'Active Mobility',desc:'Kneel at a bench, elbows on bench, sit hips back and press chest through arms toward floor.',rx:'3 × 10 reps'}
+    ],
+    'Rotation Left': [
+      {name:'T-Spine Rotation PAILs/RAILs (Left)',type:'PAILs/RAILs',desc:'In an open book position rotating left, push back toward center (PAILs), then rotate further left (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Open Book Rotation (Left)',type:'Passive Stretch',desc:'Side-lying, knees stacked. Open top arm to the left, letting upper back rotate. Breathe into the stretch.',rx:'3 × 45s'},
+      {name:'Seated Thoracic Rotation (Left)',type:'Active Mobility',desc:'Sit cross-legged or in a chair, hands behind head. Rotate torso left keeping hips fixed.',rx:'3 × 8 reps with 3s hold'}
+    ],
+    'Rotation Right': [
+      {name:'T-Spine Rotation PAILs/RAILs (Right)',type:'PAILs/RAILs',desc:'Open book rotating right. Push toward center (PAILs), then rotate further right (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Open Book Rotation (Right)',type:'Passive Stretch',desc:'Side-lying, open top arm to the right, letting upper back rotate.',rx:'3 × 45s'},
+      {name:'Seated Thoracic Rotation (Right)',type:'Active Mobility',desc:'Hands behind head, rotate torso right. Keep hips and lower back still.',rx:'3 × 8 reps with 3s hold'}
+    ],
+    'Lateral Flexion Left': [
+      {name:'T-Spine Lateral Flexion PAILs/RAILs (Left)',type:'PAILs/RAILs',desc:'Side-bend left at end range. Push torso right (PAILs), then bend further left (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Side-Lying Thoracic Stretch (Left)',type:'Passive Stretch',desc:'Lie on right side over a foam roller at mid-ribs. Let gravity open up the left side.',rx:'3 × 30s'},
+      {name:'Standing Side-Bend (Left)',type:'Active Mobility',desc:'Arms overhead, slowly side-bend left focusing on thoracic spine. Return with control.',rx:'2 × 10 reps'}
+    ],
+    'Lateral Flexion Right': [
+      {name:'T-Spine Lateral Flexion PAILs/RAILs (Right)',type:'PAILs/RAILs',desc:'Side-bend right at end range. Push left (PAILs), bend further right (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Side-Lying Thoracic Stretch (Right)',type:'Passive Stretch',desc:'Lie on left side over foam roller. Let gravity open the right side.',rx:'3 × 30s'},
+      {name:'Standing Side-Bend (Right)',type:'Active Mobility',desc:'Arms overhead, side-bend right isolating thoracic spine.',rx:'2 × 10 reps'}
+    ]
+  },
+  lumbar: {
+    'Flexion': [
+      {name:'Lumbar Flexion PAILs/RAILs',type:'PAILs/RAILs',desc:'In a deep child\'s pose position, gently push your hips back toward heels (PAILs), then try to round lower back further (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Knees-to-Chest Stretch',type:'Passive Stretch',desc:'Lie on back, pull both knees to chest. Gently rock side to side.',rx:'3 × 30s holds'},
+      {name:'Cat-Cow (Flexion Emphasis)',type:'Active Mobility',desc:'On all fours, slowly alternate between full lumbar flexion (cat) and neutral. Focus on segmental control.',rx:'3 × 10 reps'}
+    ],
+    'Extension': [
+      {name:'Lumbar Extension PAILs/RAILs',type:'PAILs/RAILs',desc:'Prone on forearms (sphinx). Push hips into floor (PAILs), then press chest higher to extend (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Prone Press-Up (McKenzie)',type:'Passive Stretch',desc:'Lie face down, hands under shoulders. Press up keeping hips on the floor.',rx:'3 × 10 reps, hold top 3s'},
+      {name:'Bird Dog Extensions',type:'Strengthening',desc:'On all fours, extend opposite arm/leg while maintaining neutral low back. Build control.',rx:'3 × 8 each side'}
+    ],
+    'Lateral Flexion Left': [
+      {name:'Lumbar Lateral Flexion PAILs/RAILs (Left)',type:'PAILs/RAILs',desc:'Standing side-bend left at end range. Push torso back right (PAILs), then bend further left (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Side-Lying QL Stretch (Left)',type:'Passive Stretch',desc:'Lie on right side, drape over a rolled towel or foam roller at waist level.',rx:'3 × 30s'},
+      {name:'Suitcase Carry (Left)',type:'Strengthening',desc:'Hold a weight in right hand only, walk maintaining upright posture. Trains left-side lateral stability.',rx:'3 × 30s walks'}
+    ],
+    'Lateral Flexion Right': [
+      {name:'Lumbar Lateral Flexion PAILs/RAILs (Right)',type:'PAILs/RAILs',desc:'Side-bend right at end range. Push left (PAILs), then bend further right (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Side-Lying QL Stretch (Right)',type:'Passive Stretch',desc:'Lie on left side over a foam roller at waist level.',rx:'3 × 30s'},
+      {name:'Suitcase Carry (Right)',type:'Strengthening',desc:'Hold weight in left hand, walk upright. Trains right-side lateral stability.',rx:'3 × 30s walks'}
+    ]
+  },
+  hip: {
+    'Flexion': [
+      {name:'Hip Flexion PAILs/RAILs',type:'PAILs/RAILs',desc:'In a deep knee-to-chest position lying on back, press knee away (PAILs), then pull knee closer (RAILs) to increase flexion.',rx:'3 × 15s / 15s'},
+      {name:'Supine Knee-to-Chest Stretch',type:'Passive Stretch',desc:'Lie on back, pull one knee to chest. Keep opposite leg flat.',rx:'3 × 45s each side'},
+      {name:'Standing Hip Flexion March',type:'Active Mobility',desc:'March in place, driving knee as high as possible with control. Slow and deliberate.',rx:'2 × 10 each leg'}
+    ],
+    'Extension': [
+      {name:'Hip Extension PAILs/RAILs',type:'PAILs/RAILs',desc:'In a half-kneeling position, posterior tilt pelvis at end range. Push knee into floor (PAILs), then drive hips further forward (RAILs).',rx:'3 × 15s / 15s'},
+      {name:'Couch Stretch',type:'Passive Stretch',desc:'Rear foot elevated on a couch/wall behind you, front foot forward in a lunge. Drive hips forward.',rx:'3 × 45s each side'},
+      {name:'Prone Hip Extension Lifts',type:'Strengthening',desc:'Lie face down, squeeze glute to lift one leg off the floor. Keep leg straight.',rx:'3 × 12 each side'}
+    ],
+    'Abduction': [
+      {name:'Hip Abduction PAILs/RAILs',type:'PAILs/RAILs',desc:'Side-lying, top leg lifted to end range. Press leg down (PAILs), then try to lift higher (RAILs).',rx:'3 × 15s / 15s'},
+      {name:'Standing Adductor Stretch',type:'Passive Stretch',desc:'Wide stance, shift weight to one side, feeling the stretch on the inner thigh of the straight leg.',rx:'3 × 45s each side'},
+      {name:'Side-Lying Hip Abduction',type:'Strengthening',desc:'Lie on side, slowly lift top leg toward ceiling. Control the descent.',rx:'3 × 15 reps'}
+    ],
+    'Adduction': [
+      {name:'Hip Adduction PAILs/RAILs',type:'PAILs/RAILs',desc:'Side-lying, bottom leg lifted. Press into a ball or the floor (PAILs), then lift higher (RAILs).',rx:'3 × 15s / 15s'},
+      {name:'Frog Stretch',type:'Passive Stretch',desc:'On all fours, spread knees wide, rock hips back. Feel the inner thigh stretch.',rx:'3 × 45s'},
+      {name:'Copenhagen Plank (Modified)',type:'Strengthening',desc:'Side plank with top foot on a bench. Lift bottom leg to meet. Builds adductor strength.',rx:'3 × 8 reps each side'}
+    ],
+    'Internal Rotation': [
+      {name:'90/90 Hip IR PAILs/RAILs',type:'PAILs/RAILs',desc:'In 90/90 position, focus on the back leg (IR). Push knee outward (PAILs), then try to drive knee further inward (RAILs).',rx:'3 × 15s / 15s'},
+      {name:'Seated Hip IR Stretch',type:'Passive Stretch',desc:'Sit on floor, one leg bent in front 90°, gently lean toward that knee to stretch IR.',rx:'3 × 45s holds'},
+      {name:'Standing Hip IR CARs with Band',type:'Active Mobility',desc:'Stand on one leg, band around ankle. Slowly rotate the working leg inward against band resistance.',rx:'2 × 5 slow reps each side'}
+    ],
+    'External Rotation': [
+      {name:'90/90 Hip ER PAILs/RAILs',type:'PAILs/RAILs',desc:'In 90/90 position, focus on the front leg (ER). Push knee inward (PAILs), then try to open further (RAILs).',rx:'3 × 15s / 15s'},
+      {name:'Pigeon Stretch',type:'Passive Stretch',desc:'From a lunge, bring front shin across the mat. Lower hips toward the floor.',rx:'3 × 60s holds'},
+      {name:'Clamshells with Band',type:'Strengthening',desc:'Side-lying, band around knees. Open top knee like a clamshell, squeezing glute.',rx:'3 × 15 reps'}
+    ]
+  },
+  knee: {
+    'Flexion': [
+      {name:'Knee Flexion PAILs/RAILs',type:'PAILs/RAILs',desc:'Sit on heels (or as close as possible). Push feet into floor to extend (PAILs), then sit deeper (RAILs).',rx:'3 × 15s / 15s'},
+      {name:'Prone Heel-to-Butt Stretch',type:'Passive Stretch',desc:'Lie face down, use a strap or hand to pull heel toward glutes.',rx:'3 × 45s each side'},
+      {name:'Wall Quad Stretch',type:'Active Mobility',desc:'Face away from wall, place top of one foot against wall behind you. Squeeze glute to deepen.',rx:'3 × 30s each side'}
+    ],
+    'Extension': [
+      {name:'Knee Extension PAILs/RAILs',type:'PAILs/RAILs',desc:'Seated with heel on a block, knee at end-range extension. Push heel down (PAILs), then try to straighten further (RAILs).',rx:'3 × 15s / 15s'},
+      {name:'Seated Hamstring Stretch',type:'Passive Stretch',desc:'Sit on floor, one leg extended. Hinge at hips reaching toward toes, keeping back flat.',rx:'3 × 45s each side'},
+      {name:'Terminal Knee Extensions with Band',type:'Strengthening',desc:'Band around knee from behind, stand and lock out the knee against resistance.',rx:'3 × 15 reps each side'}
+    ],
+    'Internal Tibial Rotation': [
+      {name:'Tibial IR PAILs/RAILs',type:'PAILs/RAILs',desc:'Seated, knee at 90°. Foot turned inward at end range. Rotate outward (PAILs), then try to rotate further inward (RAILs).',rx:'3 × 10s / 10s'},
+      {name:'Seated Tibial IR Stretch',type:'Passive Stretch',desc:'Sit with knee bent 90°, gently use hands to rotate lower leg inward. Hold at end range.',rx:'3 × 30s'},
+      {name:'Banded Tibial IR Rotations',type:'Active Mobility',desc:'Band around foot, knee bent. Rotate foot inward against band resistance.',rx:'2 × 12 reps'}
+    ],
+    'External Tibial Rotation': [
+      {name:'Tibial ER PAILs/RAILs',type:'PAILs/RAILs',desc:'Seated, knee at 90°. Foot turned outward at end range. Rotate inward (PAILs), then further outward (RAILs).',rx:'3 × 10s / 10s'},
+      {name:'Seated Tibial ER Stretch',type:'Passive Stretch',desc:'Sit with knee bent, gently rotate lower leg outward. Hold.',rx:'3 × 30s'},
+      {name:'Banded Tibial ER Rotations',type:'Active Mobility',desc:'Band around foot resisting outward rotation. Rotate against the band.',rx:'2 × 12 reps'}
+    ]
+  },
+  elbow: {
+    'Flexion': [
+      {name:'Elbow Flexion PAILs/RAILs',type:'PAILs/RAILs',desc:'Elbow fully bent, press forearm against upper arm (PAILs), then try to flex further (RAILs).',rx:'3 × 10s / 10s'},
+      {name:'Bicep Stretch on Wall',type:'Passive Stretch',desc:'Place palm on wall, arm straight, fingers pointing down. Turn body away.',rx:'3 × 30s each side'},
+      {name:'Slow Eccentric Curls',type:'Strengthening',desc:'Curl weight up, then lower over 5 seconds. Builds strength through full ROM.',rx:'3 × 8 reps'}
+    ],
+    'Extension': [
+      {name:'Elbow Extension PAILs/RAILs',type:'PAILs/RAILs',desc:'Arm fully straight, press into a table (PAILs), then try to hyperextend slightly (RAILs).',rx:'3 × 10s / 10s'},
+      {name:'Overhead Tricep Stretch',type:'Passive Stretch',desc:'Reach hand behind head between shoulder blades. Use other hand to gently push elbow back.',rx:'3 × 30s each side'},
+      {name:'Slow Eccentric Tricep Extensions',type:'Strengthening',desc:'Overhead tricep extension, lower weight slowly over 5 seconds.',rx:'3 × 8 reps'}
+    ],
+    'Pronation': [
+      {name:'Forearm Pronation PAILs/RAILs',type:'PAILs/RAILs',desc:'Elbow bent 90°, palm fully pronated. Push toward supination (PAILs), then pronate further (RAILs).',rx:'3 × 10s / 10s'},
+      {name:'Wrist Roller Pronation',type:'Active Mobility',desc:'Hold a dowel with weight attached, roll it by pronating wrists.',rx:'2 × 3 full rolls'},
+      {name:'Pronation with Hammer',type:'Strengthening',desc:'Hold a hammer by the end, slowly rotate to pronation against the weight.',rx:'3 × 10 reps'}
+    ],
+    'Supination': [
+      {name:'Forearm Supination PAILs/RAILs',type:'PAILs/RAILs',desc:'Elbow bent 90°, palm fully supinated. Push toward pronation (PAILs), then supinate further (RAILs).',rx:'3 × 10s / 10s'},
+      {name:'Supination Stretch with Dowel',type:'Passive Stretch',desc:'Hold a dowel, use it as a lever to gently increase supination range.',rx:'3 × 30s'},
+      {name:'Supination with Hammer',type:'Strengthening',desc:'Hold hammer by end, slowly rotate to supination against gravity.',rx:'3 × 10 reps'}
+    ]
+  },
+  wrist: {
+    'Flexion': [
+      {name:'Wrist Flexion PAILs/RAILs',type:'PAILs/RAILs',desc:'Wrist flexed over table edge at end range. Press up (PAILs), then flex deeper (RAILs).',rx:'3 × 10s / 10s'},
+      {name:'Prayer Stretch (Reverse)',type:'Passive Stretch',desc:'Press backs of hands together in front of chest, lower hands until you feel stretch on top of wrists.',rx:'3 × 30s'},
+      {name:'Wrist Flexion Curls',type:'Strengthening',desc:'Hold light dumbbell, forearm on thigh, curl wrist up (palm up).',rx:'3 × 15 reps'}
+    ],
+    'Extension': [
+      {name:'Wrist Extension PAILs/RAILs',type:'PAILs/RAILs',desc:'Wrist extended on table edge. Press down (PAILs), then extend further (RAILs).',rx:'3 × 10s / 10s'},
+      {name:'Prayer Stretch',type:'Passive Stretch',desc:'Press palms together in front of chest, lower hands until you feel stretch on inner wrists.',rx:'3 × 30s'},
+      {name:'Wrist Extension Curls',type:'Strengthening',desc:'Hold light dumbbell, forearm on thigh palm down, extend wrist upward.',rx:'3 × 15 reps'}
+    ],
+    'Radial Deviation': [
+      {name:'Radial Deviation PAILs/RAILs',type:'PAILs/RAILs',desc:'Wrist deviated toward thumb side at end range. Push toward pinky (PAILs), then deviate further toward thumb (RAILs).',rx:'3 × 10s / 10s'},
+      {name:'Radial Deviation Stretch',type:'Passive Stretch',desc:'Hold hand with fingers pointing down, gently pull toward thumb side.',rx:'3 × 30s'},
+      {name:'Hammer Radial Walks',type:'Strengthening',desc:'Hold hammer vertically, use wrist to tilt it toward thumb side (radial deviation).',rx:'3 × 10 reps'}
+    ],
+    'Ulnar Deviation': [
+      {name:'Ulnar Deviation PAILs/RAILs',type:'PAILs/RAILs',desc:'Wrist deviated toward pinky side at end range. Push toward thumb (PAILs), then deviate further toward pinky (RAILs).',rx:'3 × 10s / 10s'},
+      {name:'Ulnar Deviation Stretch',type:'Passive Stretch',desc:'Hold hand, gently pull toward pinky side.',rx:'3 × 30s'},
+      {name:'Hammer Ulnar Walks',type:'Strengthening',desc:'Hold hammer, tilt toward pinky side using wrist only.',rx:'3 × 10 reps'}
+    ]
+  },
+  ankle: {
+    'Dorsiflexion': [
+      {name:'Ankle DF PAILs/RAILs',type:'PAILs/RAILs',desc:'Knee-to-wall stretch position at end range. Push foot into floor to plantarflex (PAILs), then drive knee further over toes (RAILs).',rx:'3 × 15s / 15s'},
+      {name:'Knee-to-Wall Mobilization',type:'Active Mobility',desc:'Foot a few inches from wall, drive knee over toes toward wall. Track knee over 2nd toe.',rx:'3 × 15 reps each side'},
+      {name:'Weighted Ankle Dorsiflexion Stretch',type:'Passive Stretch',desc:'Half-kneeling, place a weight on front knee to drive deeper dorsiflexion.',rx:'3 × 45s each side'}
+    ],
+    'Plantarflexion': [
+      {name:'Ankle PF PAILs/RAILs',type:'PAILs/RAILs',desc:'Seated with foot pointed at end range. Pull toes up (PAILs), then point further (RAILs).',rx:'3 × 15s / 15s'},
+      {name:'Top-of-Foot Stretch (Kneeling)',type:'Passive Stretch',desc:'Kneel with tops of feet flat on the floor. Gently sit back on heels.',rx:'3 × 30s'},
+      {name:'Calf Raises with Full ROM',type:'Strengthening',desc:'On a step edge, lower heels below step then raise maximally. Full range calf raises.',rx:'3 × 15 reps'}
+    ],
+    'Inversion': [
+      {name:'Ankle Inversion PAILs/RAILs',type:'PAILs/RAILs',desc:'Ankle inverted at end range. Push into eversion (PAILs), then invert further (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Peroneal Stretch',type:'Passive Stretch',desc:'Cross ankle over opposite knee, gently press foot into inversion to stretch the peroneals.',rx:'3 × 30s'},
+      {name:'Banded Ankle Inversion',type:'Strengthening',desc:'Band around foot pulling outward. Slowly turn sole inward against resistance.',rx:'3 × 15 reps'}
+    ],
+    'Eversion': [
+      {name:'Ankle Eversion PAILs/RAILs',type:'PAILs/RAILs',desc:'Ankle everted at end range. Push into inversion (PAILs), then evert further (RAILs).',rx:'3 × 12s / 12s'},
+      {name:'Tibialis Posterior Stretch',type:'Passive Stretch',desc:'Stand on a slant board with foot angled into eversion. Hold.',rx:'3 × 30s'},
+      {name:'Banded Ankle Eversion',type:'Strengthening',desc:'Band around foot pulling inward. Slowly turn sole outward against resistance.',rx:'3 × 15 reps'}
+    ]
+  }
+};
+
+// ===== STATE =====
+let assessmentData = {};
+let currentJointIdx = -1;
+let currentSide = 'left'; // for bilateral joints
+let fullAssessmentMode = false;
+
+// Load saved current session
+function loadSession(){
+  try{ assessmentData = JSON.parse(localStorage.getItem('cars_current') || '{}'); }catch(e){ assessmentData = {}; }
+}
+function saveSession(){
+  localStorage.setItem('cars_current', JSON.stringify(assessmentData));
+}
+
+loadSession();
+
+// ===== RENDERING =====
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='home') renderJointList();
+  window.scrollTo(0,0);
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab-bar .tab-btn')[0].classList.toggle('active', tab==='assess');
+  document.querySelectorAll('.tab-bar .tab-btn')[1].classList.toggle('active', tab==='history');
+  document.getElementById('tab-assess').style.display = tab==='assess'?'block':'none';
+  document.getElementById('tab-history').style.display = tab==='history'?'block':'none';
+  if(tab==='history') renderHistory();
+}
+
+function getJointKey(joint, side){
+  return joint.bilateral ? `${joint.id}_${side}` : joint.id;
+}
+
+function getJointScore(joint){
+  let total = 0, count = 0;
+  const sides = joint.bilateral ? ['left','right'] : [null];
+  sides.forEach(side => {
+    const key = side ? `${joint.id}_${side}` : joint.id;
+    const data = assessmentData[key];
+    if(data){
+      joint.directions.forEach(d => {
+        if(data[d] !== undefined){ total += data[d].score; count++; }
+      });
+    }
+  });
+  if(count===0) return null;
+  return (total/count).toFixed(1);
+}
+
+function getScoreClass(avg){
+  if(avg===null) return 'pending';
+  if(avg<1.5) return 'good';
+  if(avg<3) return 'moderate';
+  return 'severe';
+}
+
+function getScoreLabel(avg){
+  if(avg===null) return 'Not assessed';
+  if(avg<1.5) return 'Good';
+  if(avg<3) return 'Moderate';
+  return 'Needs work';
+}
+
+function renderJointList(){
+  const list = document.getElementById('joint-list');
+  const hasAny = Object.keys(assessmentData).length > 0;
+  document.getElementById('view-results-btn').style.display = hasAny ? 'flex' : 'none';
+
+  list.innerHTML = JOINTS.map((j,i)=>{
+    const avg = getJointScore(j);
+    const cls = getScoreClass(avg);
+    return `<div class="card joint-card" onclick="startAssessment(${i})">
+      <div class="joint-icon">${j.icon}</div>
+      <div class="joint-info">
+        <h3>${j.name}</h3>
+        <p>${j.directions.length} directions${j.bilateral?' • Bilateral':''}</p>
+      </div>
+      <span class="joint-status status-${cls}">${avg!==null?avg+'/5':''} ${getScoreLabel(avg)}</span>
+    </div>`;
+  }).join('');
+}
+
+function startAssessment(idx){
+  currentJointIdx = idx;
+  fullAssessmentMode = false;
+  currentSide = JOINTS[idx].bilateral ? 'left' : null;
+  renderAssessment();
+  showScreen('assessment');
+}
+
+function startFullAssessment(){
+  currentJointIdx = 0;
+  fullAssessmentMode = true;
+  currentSide = JOINTS[0].bilateral ? 'left' : null;
+  renderAssessment();
+  showScreen('assessment');
+}
+
+function renderAssessment(){
+  const joint = JOINTS[currentJointIdx];
+  document.getElementById('assess-joint-name').textContent = joint.name;
+  document.getElementById('assess-subtitle').textContent = `Joint ${currentJointIdx+1} of ${JOINTS.length}`;
+
+  const pct = ((currentJointIdx) / JOINTS.length) * 100;
+  document.getElementById('assess-progress').style.width = pct+'%';
+  document.getElementById('cars-instruction').innerHTML = `<strong>How to perform CARs:</strong> ${joint.instruction}`;
+
+  // Side picker
+  const spc = document.getElementById('side-picker-container');
+  if(joint.bilateral){
+    spc.innerHTML = `<div class="side-picker">
+      <button class="side-btn ${currentSide==='left'?'active':''}" onclick="switchSide('left')">Left</button>
+      <button class="side-btn ${currentSide==='right'?'active':''}" onclick="switchSide('right')">Right</button>
+    </div>`;
+  } else {
+    spc.innerHTML = '';
+  }
+
+  renderDirections();
+}
+
+function switchSide(side){
+  // Save current first
+  currentSide = side;
+  renderAssessment();
+}
+
+function renderDirections(){
+  const joint = JOINTS[currentJointIdx];
+  const key = getJointKey(joint, currentSide);
+  if(!assessmentData[key]) assessmentData[key] = {};
+  const data = assessmentData[key];
+
+  const container = document.getElementById('directions-container');
+  container.innerHTML = joint.directions.map(dir => {
+    const d = data[dir] || {score:null,pain:false,painNote:''};
+    return `<div class="direction-card">
+      <h4>${dir}</h4>
+      <div class="rating-row">
+        ${[0,1,2,3,4,5].map(n=>`<button class="rating-btn r${n} ${d.score===n?'selected':''}" onclick="rate('${key}','${dir}',${n})">${n}</button>`).join('')}
+      </div>
+      <div class="rating-label"><span>No restriction</span><span>Severe</span></div>
+      <div class="pain-row">
+        <span style="font-size:.85rem">⚠️ Pain?</span>
+        <button class="pain-toggle ${d.pain?'on':''}" onclick="togglePain('${key}','${dir}',this)"></button>
+        <input class="pain-input ${d.pain?'show':''}" type="text" placeholder="Describe pain location..." value="${d.painNote||''}" onchange="setPainNote('${key}','${dir}',this.value)">
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function rate(key, dir, score){
+  if(!assessmentData[key]) assessmentData[key] = {};
+  if(!assessmentData[key][dir]) assessmentData[key][dir] = {score:null,pain:false,painNote:''};
+  assessmentData[key][dir].score = score;
+  saveSession();
+  renderDirections();
+}
+
+function togglePain(key, dir, btn){
+  if(!assessmentData[key][dir]) assessmentData[key][dir] = {score:null,pain:false,painNote:''};
+  assessmentData[key][dir].pain = !assessmentData[key][dir].pain;
+  if(!assessmentData[key][dir].pain) assessmentData[key][dir].painNote = '';
+  saveSession();
+  renderDirections();
+}
+
+function setPainNote(key, dir, val){
+  assessmentData[key][dir].painNote = val;
+  saveSession();
+}
+
+function nextJoint(){
+  const joint = JOINTS[currentJointIdx];
+  // If bilateral and on left, switch to right
+  if(joint.bilateral && currentSide==='left'){
+    currentSide = 'right';
+    renderAssessment();
+    window.scrollTo(0,0);
+    return;
+  }
+
+  if(fullAssessmentMode && currentJointIdx < JOINTS.length - 1){
+    currentJointIdx++;
+    currentSide = JOINTS[currentJointIdx].bilateral ? 'left' : null;
+    renderAssessment();
+    window.scrollTo(0,0);
+  } else {
+    showResults();
+  }
+}
+
+function prevJoint(){
+  const joint = JOINTS[currentJointIdx];
+  if(joint.bilateral && currentSide==='right'){
+    currentSide = 'left';
+    renderAssessment();
+    window.scrollTo(0,0);
+    return;
+  }
+  if(currentJointIdx > 0){
+    currentJointIdx--;
+    currentSide = JOINTS[currentJointIdx].bilateral ? 'right' : null;
+    renderAssessment();
+    window.scrollTo(0,0);
+  } else {
+    showScreen('home');
+  }
+}
+
+// ===== RESULTS =====
+function showResults(){
+  document.getElementById('results-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  renderSummary();
+  renderExercises();
+  showScreen('results');
+}
+
+function switchResultTab(tab){
+  const btns = document.querySelectorAll('#results .tab-btn');
+  btns[0].classList.toggle('active', tab==='summary');
+  btns[1].classList.toggle('active', tab==='exercises');
+  document.getElementById('result-summary').style.display = tab==='summary'?'block':'none';
+  document.getElementById('result-exercises').style.display = tab==='exercises'?'block':'none';
+}
+
+function renderSummary(){
+  const grid = [];
+  JOINTS.forEach(joint => {
+    const sides = joint.bilateral ? ['left','right'] : [null];
+    sides.forEach(side => {
+      const key = side ? `${joint.id}_${side}` : joint.id;
+      const data = assessmentData[key];
+      let total=0,count=0,maxScore=0,painDirs=[];
+      if(data){
+        joint.directions.forEach(d=>{
+          if(data[d] && data[d].score!==null){
+            total+=data[d].score; count++;
+            maxScore=Math.max(maxScore,data[d].score);
+            if(data[d].pain) painDirs.push(d);
+          }
+        });
+      }
+      const avg = count>0?(total/count):null;
+      const cls = avg===null?'':(avg<1.5?'sg':(avg<3?'sm':'ss'));
+      const label = side ? `${joint.name} (${side==='left'?'L':'R'})` : joint.name;
+      grid.push(`<div class="summary-card ${cls}" onclick="showJointDetail('${joint.id}','${side}')">
+        <h4>${joint.icon} ${label}</h4>
+        <div class="score">${avg!==null?avg:'—'}</div>
+        <div class="score-label">${avg!==null?getScoreLabel(avg):'Not assessed'}${painDirs.length?` ⚠️ Pain (${painDirs.length})`:''}</div>
+      </div>`);
+    });
+  });
+  document.getElementById('result-summary').innerHTML = `<div class="summary-grid">${grid.join('')}</div>`;
+}
+
+function showJointDetail(jointId, side){
+  const joint = JOINTS.find(j=>j.id===jointId);
+  const key = side && side!=='null' ? `${jointId}_${side}` : jointId;
+  const data = assessmentData[key] || {};
+  const sideLabel = side && side!=='null' ? ` (${side==='left'?'Left':'Right'})` : '';
+
+  let html = `<h2>${joint.icon} ${joint.name}${sideLabel}</h2><div class="mt-12">`;
+  joint.directions.forEach(dir=>{
+    const d = data[dir];
+    const score = d ? d.score : null;
+    const color = score===null?'#ccc':score<2?'var(--green)':score<3?'var(--yellow)':score<4?'var(--orange)':'var(--red)';
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee">
+      <div style="width:40px;height:40px;border-radius:10px;background:${color};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;flex-shrink:0">${score!==null?score:'?'}</div>
+      <div><strong>${dir}</strong>${d&&d.pain?`<br><span style="color:var(--red);font-size:.8rem">⚠️ Pain: ${d.painNote||'noted'}</span>`:''}</div>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('overlay-body').innerHTML = html;
+  document.getElementById('overlay').classList.add('show');
+}
+
+function closeOverlay(){
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function renderExercises(){
+  const restrictions = [];
+  JOINTS.forEach(joint=>{
+    const sides = joint.bilateral ? ['left','right'] : [null];
+    sides.forEach(side=>{
+      const key = side ? `${joint.id}_${side}` : joint.id;
+      const data = assessmentData[key];
+      if(!data) return;
+      joint.directions.forEach(dir=>{
+        if(data[dir] && data[dir].score >= 3){
+          restrictions.push({
+            joint, side, dir,
+            score: data[dir].score,
+            pain: data[dir].pain,
+            painNote: data[dir].painNote
+          });
+        }
+      });
+    });
+  });
+
+  restrictions.sort((a,b)=>b.score-a.score);
+
+  const container = document.getElementById('result-exercises');
+  if(restrictions.length===0){
+    container.innerHTML = '<div class="no-issues">🎉 No significant restrictions found! Keep up the great mobility work.</div>';
+    return;
+  }
+
+  let html = `<p style="color:var(--text-light);font-size:.85rem;margin-bottom:16px">${restrictions.length} restriction${restrictions.length>1?'s':''} found (score ≥ 3). Exercises ordered by priority.</p>`;
+
+  restrictions.forEach(r=>{
+    const sideLabel = r.side ? ` (${r.side==='left'?'Left':'Right'})` : '';
+    const exercises = (EXERCISES[r.joint.id] && EXERCISES[r.joint.id][r.dir]) || [];
+    const scoreColor = r.score>=4?'var(--red)':'var(--orange)';
+
+    html += `<div class="exercise-group">
+      <h3><span style="color:${scoreColor}">${r.score}/5</span> ${r.joint.icon} ${r.joint.name}${sideLabel} — ${r.dir}${r.pain?' ⚠️':''}</h3>`;
+
+    if(exercises.length===0){
+      html += '<p style="color:var(--text-light);font-size:.85rem;padding:8px">General recommendation: Perform slow CARs in this direction daily, 5 reps each way.</p>';
+    }
+
+    exercises.forEach(ex=>{
+      html += `<div class="exercise-item">
+        <div class="ex-type">${ex.type}</div>
+        <h4>${ex.name}</h4>
+        <p>${ex.desc}</p>
+        <div class="prescription">📋 ${ex.rx}</div>
+      </div>`;
+    });
+
+    html += '</div>';
+  });
+
+  container.innerHTML = html;
+}
+
+// ===== SAVE / HISTORY =====
+function saveAssessment(){
+  const history = JSON.parse(localStorage.getItem('cars_history')||'[]');
+  history.unshift({
+    date: new Date().toISOString(),
+    data: JSON.parse(JSON.stringify(assessmentData))
+  });
+  // Keep last 50
+  if(history.length>50) history.length=50;
+  localStorage.setItem('cars_history', JSON.stringify(history));
+
+  // Clear current
+  assessmentData = {};
+  localStorage.removeItem('cars_current');
+
+  alert('Assessment saved! ✅');
+  showScreen('home');
+}
+
+function renderHistory(){
+  const history = JSON.parse(localStorage.getItem('cars_history')||'[]');
+  const container = document.getElementById('history-list');
+
+  if(history.length===0){
+    container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No saved assessments yet.<br>Complete an assessment to see it here.</p></div>';
+    return;
+  }
+
+  container.innerHTML = history.map((h,i)=>{
+    const d = new Date(h.date);
+    const dateStr = d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const timeStr = d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    const keys = Object.keys(h.data);
+    return `<div class="history-item" onclick="loadHistory(${i})">
+      <div>
+        <h4>${dateStr}</h4>
+        <p>${timeStr} • ${keys.length} areas assessed</p>
+      </div>
+      <div class="history-actions">
+        <button onclick="event.stopPropagation();deleteHistory(${i})" title="Delete">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function loadHistory(idx){
+  const history = JSON.parse(localStorage.getItem('cars_history')||'[]');
+  if(!history[idx]) return;
+  assessmentData = JSON.parse(JSON.stringify(history[idx].data));
+  saveSession();
+  showResults();
+}
+
+function deleteHistory(idx){
+  if(!confirm('Delete this assessment?')) return;
+  const history = JSON.parse(localStorage.getItem('cars_history')||'[]');
+  history.splice(idx,1);
+  localStorage.setItem('cars_history', JSON.stringify(history));
+  renderHistory();
+}
+
+// ===== INIT =====
+renderJointList();
+
+// Register service worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
